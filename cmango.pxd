@@ -21,20 +21,22 @@ cdef extern from "mango.h":
     mango_exit_t mango_load_kernel(const char *kname, kernelfunction *kernel, mango_unit_type_t unit, filetype t)
     # TODO variadic function
     mango_kernel_t mango_register_kernel(uint32_t kernel_id, kernelfunction *kernel, unsigned int nbuffers_in, unsigned int nbuffers_out, ...)
+
     void mango_deregister_kernel(mango_kernel_t kernel)
     # TODO variadic function
     mango_buffer_t mango_register_memory(uint32_t buffer_id, size_t size, mango_buffer_type_t mode, unsigned int nkernels_in, unsigned int nkernels_out, ...)
+
     void mango_deregister_memory(mango_buffer_t mem)
     # TODO variadic function
     mango_event_t mango_register_event(unsigned int nkernels_in, unsigned int nkernels_out, ...)
+
     void mango_deregister_event(mango_event_t event)
     mango_event_t mango_get_buffer_event(mango_buffer_t buffer)
     mango_task_graph_t *mango_task_graph_vcreate(mango_kernel_t **kernels, mango_buffer_t **buffers, mango_event_t **events)
     # TODO variadic function
     mango_task_graph_t *mango_task_graph_create(int k, int b, int e, ...)
+
     void mango_task_graph_destroy(mango_task_graph_t *task_graph)
-
-
     void mango_task_graph_destroy_all(mango_task_graph_t *task_graph)
     mango_task_graph_t *mango_task_graph_add_kernel(mango_task_graph_t *tg, mango_kernel_t *kernel)
     mango_task_graph_t *mango_task_graph_remove_kernel(mango_task_graph_t *tg, mango_kernel_t *kernel)
@@ -52,7 +54,9 @@ cdef extern from "mango.h":
     mango_event_t mango_write(const void *GN_buffer, mango_buffer_t HN_buffer, mango_communication_mode_t mode, size_t global_size)
     mango_event_t mango_read(void *GN_buffer, mango_buffer_t HN_buffer, mango_communication_mode_t mode, size_t global_size)
     mango_arg_t *mango_arg(mango_kernel_t kernel, const void *value, size_t size, mango_buffer_type_t t)
+    # TODO variadic function
     mango_args_t *mango_set_args(mango_kernel_t kernel, int argc, ...)
+
     mango_event_t mango_start_kernel(mango_kernel_t kernel, mango_args_t *args, mango_event_t event)
     uint32_t mango_get_unit_id(mango_kernel_t kernel)
     uint16_t mango_get_max_nr_buffers()

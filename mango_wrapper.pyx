@@ -2,7 +2,7 @@
 
 cimport cmango
 from enum import Enum
-from libc.stdint cimport uint32_t
+from libc.stdint cimport uint32_t, uint16_t
 from libc.stdlib cimport malloc, free
 
 def str_encode(s: str) -> bytes:
@@ -36,6 +36,30 @@ cdef class mango_task_graph_t:
         obj.ptr = ptr
         return obj
 
+cdef class mango_args_t:
+    cdef cmango.mango_args_t *ptr
+
+    def __init__(self, *args):
+        raise TypeError('Cannot create instance from Python')
+
+    @staticmethod
+    cdef mango_args_t create(cmango.mango_args_t* ptr):
+        obj = <mango_args_t>mango_args_t.__new__(mango_args_t)
+        obj.ptr = ptr
+        return obj
+
+cdef class mango_arg_t:
+    cdef cmango.mango_arg_t *ptr
+
+    def __init__(self, *args):
+        raise TypeError('Cannot create instance from Python')
+
+    @staticmethod
+    cdef mango_arg_t create(cmango.mango_arg_t* ptr):
+        obj = <mango_arg_t>mango_arg_t.__new__(mango_arg_t)
+        obj.ptr = ptr
+        return obj
+
 
 def mango_init(application_name: str, recipe: str) -> mango_exit_t:
     b_application_name = str_encode(application_name)
@@ -59,52 +83,91 @@ def mango_load_kernel(kname: str, kernel: kernelfunction, unit: mango_unit_type_
     result = cmango.mango_load_kernel(b_kname, kernel.ptr, unit.value, t.value)
     return mango_exit_t(result) 
 
-''' Segmentation fault (not implemented in mango.cpp)
-def mango_deregister_kernel(kernel: uint32_t) -> None:
-    cmango.mango_deregister_kernel(kernel)
-'''
-
 def mango_deregister_memory(mem: uint32_t) -> None:
     cmango.mango_deregister_memory(mem)
-
-''' Segmentation fault (not implemented in mango.cpp)
-def mango_deregister_event(event: uint32_t) -> None:
-    cmango.mango_deregister_event(event)
-'''
 
 def mango_get_buffer_event(buffer: uint32_t) -> uint32_t:
     return cmango.mango_get_buffer_event(buffer)
 
+def mango_task_graph_destroy(task_graph: mango_task_graph_t) -> None:
+    cmango.mango_task_graph_destroy(task_graph.ptr)
 
-''' Segmentation fault (not implemented in mango.cpp)
-def mango_task_graph_vcreate(kernels: list, buffers: list, events: list) -> mango_task_graph_t:
-    cdef uint32_t *kernels_array = <uint32_t *>malloc(len(kernels)*sizeof(uint32_t))
-    if kernels_array is NULL:
-        raise MemoryError()
-    for i in range(len(kernels)):
-        kernels_array[i] = kernels[i]
+def mango_task_graph_destroy_all(task_graph: mango_task_graph_t) -> None:
+    cmango.mango_task_graph_destroy_all(task_graph.ptr)
 
-    cdef uint32_t *buffers_array = <uint32_t *>malloc(len(buffers)*sizeof(uint32_t))
-    if buffers_array is NULL:
-        raise MemoryError()
-    for i in range(len(buffers)):
-        buffers_array[i] = buffers[i]
-
-    cdef uint32_t *events_array = <uint32_t *>malloc(len(events)*sizeof(uint32_t))
-    if events_array is NULL:
-        raise MemoryError()
-    for i in range(len(events)):
-        events_array[i] = events[i]
-
-    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_vcreate(&kernels_array, &buffers_array, &events_array)
-
-    free(kernels_array)
-    free(buffers_array)
-    free(events_array)
-
+# nope
+def mango_task_graph_add_kernel(tg: mango_task_graph_t, kernel: uint32_t) -> mango_task_graph_t:
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_add_kernel(tg.ptr, &kernel)
     return mango_task_graph_t.create(ptr)
-'''
+
+def mango_task_graph_remove_kernel(tg: mango_task_graph_t, kernel: uint32_t) -> mango_task_graph_t:
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_remove_kernel(tg.ptr, &kernel)
+    return mango_task_graph_t.create(ptr)
+
+def mango_task_graph_add_buffer(tg: mango_task_graph_t, buffer: uint32_t) -> mango_task_graph_t:
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_add_buffer(tg.ptr, &buffer)
+    return mango_task_graph_t.create(ptr)
+    
+def mango_task_graph_remove_buffer(tg: mango_task_graph_t, buffer: uint32_t) -> mango_task_graph_t:
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_remove_buffer(tg.ptr, &buffer)
+    return mango_task_graph_t.create(ptr)
+
+def mango_task_graph_add_event(tg: mango_task_graph_t, event: uint32_t) -> mango_task_graph_t:
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_add_event(tg.ptr, &event)
+    return mango_task_graph_t.create(ptr)
+
+def mango_task_graph_remove_event(tg: mango_task_graph_t, event: uint32_t) -> mango_task_graph_t:
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_remove_event(tg.ptr, &event)
+    return mango_task_graph_t.create(ptr)
+
+def mango_resource_allocation(tg: mango_task_graph_t) -> mango_exit_t:
+    cdef cmango.mango_exit_t result = cmango.mango_resource_allocation(tg.ptr)
+    return mango_exit_t(result) 
  
+def mango_resource_deallocation(tg: mango_task_graph_t) -> None:
+    cmango.mango_resource_deallocation(tg.ptr)
+
+def mango_wait(e: uint32_t) -> None:
+    cmango.mango_wait(e)
+
+def mango_wait_state(e: uint32_t, state: uint32_t) -> None:
+    cmango.mango_wait_state(e, state)
+
+def mango_write_synchronization(event: uint32_t, value: uint32_t) -> None:
+    cmango.mango_write_synchronization(event, value)
+
+def mango_read_synchronization(event: uint32_t) -> uint32_t:
+    return cmango.mango_read_synchronization(event)
+
+def mango_lock(e: uint32_t) -> uint32_t:
+    return cmango.mango_lock(e)
+
+def mango_write(gn_buffer: void_ptr, hn_buffer: uint32_t, mode: mango_communication_mode_t, global_size: size_t) -> uint32_t:
+    check_type_mango_communication_mode_t(mode)
+    return cmango.mango_write(gn_buffer.ptr, hn_buffer, mode.value, global_size)
+    
+def mango_read(gn_buffer: void_ptr, hn_buffer: uint32_t, mode: mango_communication_mode_t, global_size: size_t) -> uint32_t:
+    check_type_mango_communication_mode_t(mode)
+    return cmango.mango_read(gn_buffer.ptr, hn_buffer, mode.value, global_size)
+
+def mango_arg(kernel: uint32_t, value: void_ptr, size: size_t, t: mango_buffer_type_t) -> mango_arg_t:
+    check_type_mango_buffer_type_t(t)
+    cdef cmango.mango_arg_t *ptr = cmango.mango_arg(kernel, value.ptr, size, t.value)
+    return mango_arg_t.create(ptr)
+
+def mango_start_kernel(kernel: uint32_t, args: mango_args_t, event: uint32_t) -> uint32_t:
+    return cmango.mango_start_kernel(kernel, args.ptr, event)
+
+def mango_get_unit_id(kernel: uint32_t) -> uint32_t:
+    return cmango.mango_get_unit_id(kernel)
+
+def mango_get_max_nr_buffers() -> uint16_t:
+    return cmango.mango_get_max_nr_buffers()
+
+def mango_get_unit_arch(kernel: uint32_t) -> mango_unit_type_t:
+    result = cmango.mango_get_unit_arch(kernel)
+    return mango_unit_type_t(result) 
+
 
 
 # mango_types_c
@@ -185,3 +248,59 @@ def check_type_mango_communication_mode_t(e: mango_communication_mode_t) -> None
     if not isinstance(e, mango_communication_mode_t):
          raise TypeError("mango_communication_mode_t required")
 
+
+# --
+cdef class void_ptr:
+    cdef void *ptr
+
+    @staticmethod
+    cdef void_ptr create(void *ptr):
+        obj = <void_ptr>void_ptr.__new__(void_ptr)
+        obj.ptr = ptr
+        return obj
+
+    @staticmethod
+    def alloc(int size) -> void_ptr:
+        return void_ptr.create(malloc(size))
+
+    #TODO test this
+    @staticmethod
+    def from_int(int ptr) -> void_ptr:
+        return void_ptr.create(&ptr)
+
+
+
+''' Segmentation fault (not implemented in mango.cpp)
+def mango_deregister_kernel(kernel: uint32_t) -> None:
+    cmango.mango_deregister_kernel(kernel)
+
+def mango_deregister_event(event: uint32_t) -> None:
+    cmango.mango_deregister_event(event)
+
+def mango_task_graph_vcreate(kernels: list, buffers: list, events: list) -> mango_task_graph_t:
+    cdef uint32_t *kernels_array = <uint32_t *>malloc(len(kernels)*sizeof(uint32_t))
+    if kernels_array is NULL:
+        raise MemoryError()
+    for i in range(len(kernels)):
+        kernels_array[i] = kernels[i]
+
+    cdef uint32_t *buffers_array = <uint32_t *>malloc(len(buffers)*sizeof(uint32_t))
+    if buffers_array is NULL:
+        raise MemoryError()
+    for i in range(len(buffers)):
+        buffers_array[i] = buffers[i]
+
+    cdef uint32_t *events_array = <uint32_t *>malloc(len(events)*sizeof(uint32_t))
+    if events_array is NULL:
+        raise MemoryError()
+    for i in range(len(events)):
+        events_array[i] = events[i]
+
+    cdef cmango.mango_task_graph_t *ptr = cmango.mango_task_graph_vcreate(&kernels_array, &buffers_array, &events_array)
+
+    free(kernels_array)
+    free(buffers_array)
+    free(events_array)
+
+    return mango_task_graph_t.create(ptr)
+'''
